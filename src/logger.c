@@ -17,6 +17,7 @@
 static FILE *g_log_file = NULL;
 static char g_log_dir[PATH_MAX] = {0};
 static int g_retention_days = 0;
+static int g_debug_enabled = 0;
 
 static int has_log_extension(const char *filename)
 {
@@ -138,7 +139,7 @@ static void logger_write(const char *level, const char *message)
     }
 }
 
-int logger_init(const char *log_dir, int retention_days)
+int logger_init(const char *log_dir, int retention_days, const char *level)
 {
     char file_path[PATH_MAX];
     char file_name[64];
@@ -180,6 +181,7 @@ int logger_init(const char *log_dir, int retention_days)
     }
 
     g_retention_days = retention_days;
+    g_debug_enabled = (level != NULL && strcmp(level, "debug") == 0) ? 1 : 0;
 
     if (join_path(file_path, sizeof(file_path), g_log_dir, file_name) != 0) {
         return -1;
@@ -194,6 +196,14 @@ int logger_init(const char *log_dir, int retention_days)
     return 0;
 }
 
+void logger_debug(const char *message)
+{
+    if (!g_debug_enabled) {
+        return;
+    }
+    logger_write("DEBUG", message);
+}
+
 void logger_info(const char *message)
 {
     logger_write("INFO", message);
@@ -202,6 +212,11 @@ void logger_info(const char *message)
 void logger_error(const char *message)
 {
     logger_write("ERROR", message);
+}
+
+int logger_is_debug_enabled(void)
+{
+    return g_debug_enabled;
 }
 
 void logger_close(void)
