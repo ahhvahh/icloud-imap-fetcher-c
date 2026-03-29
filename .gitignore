@@ -1,0 +1,15 @@
+bin/
+build/
+out/
+*.o
+*.a
+*.so
+*.log
+logs/
+downloads/
+processed/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+config/local.conf
