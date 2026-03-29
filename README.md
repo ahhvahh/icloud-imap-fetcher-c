@@ -141,6 +141,20 @@ Exemplo:
 sudo ./scripts/install.sh --prefix /usr/local --sysconfdir /etc --localstatedir /var
 ```
 
+### Instalação direta do GitHub (Debian/Ubuntu)
+
+Use o instalador automatizado para baixar o repositório em diretório temporário, compilar e instalar:
+
+```bash
+sudo ./scripts/install-from-github-debian.sh --repo-url https://github.com/SEU_USUARIO/icloud-imap-fetcher-c.git --branch main
+```
+
+Se quiser, passe opções adicionais para o `scripts/install.sh` após `--`:
+
+```bash
+sudo ./scripts/install-from-github-debian.sh -- --prefix /usr/local --sysconfdir /etc --localstatedir /var
+```
+
 ## systemd
 
 Após instalar:
