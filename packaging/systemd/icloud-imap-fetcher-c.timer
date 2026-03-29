@@ -1,0 +1,11 @@
+[Unit]
+Description=Run iCloud IMAP Fetcher C on a fixed interval
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Persistent=true
+Unit=icloud-imap-fetcher-c.service
+
+[Install]
+WantedBy=timers.target
