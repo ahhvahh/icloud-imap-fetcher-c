@@ -1,0 +1,14 @@
+[Unit]
+Description=iCloud IMAP Fetcher C Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=__PREFIX__/bin/icloud-imap-fetcher-c --config __SYSCONFDIR__/icloud-imap-fetcher-c/config.conf
+Nice=5
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
