@@ -13,7 +13,9 @@ Automatizar um fluxo operacional de coleta de e-mails em Linux, sem interface gr
 - Carregamento de configuração por arquivo `.conf`.
 - Conexão IMAP inicial usando `libcurl`.
 - Preparação de diretórios de download/processados.
+- Mapeamento de múltiplas pastas IMAP com destinos independentes para anexos e conteúdo.
 - Logging em arquivo por dia com retenção em dias.
+- Rota HTTP de logs (`/logs`) para acompanhamento via terminal.
 - Instalação local com script (`scripts/install.sh`).
 - Unidades `systemd` de `service` e `timer`.
 
@@ -71,11 +73,14 @@ dry_run = false
 [storage]
 download_dir = /var/lib/icloud-imap-fetcher-c/downloads
 processed_dir = /var/lib/icloud-imap-fetcher-c/processed
+mapping = INBOX/Processar|UNSEEN|/var/lib/icloud-imap-fetcher-c/downloads/processar|/var/lib/icloud-imap-fetcher-c/contents/processar
+mapping = INBOX/Notas|UNSEEN|/var/lib/icloud-imap-fetcher-c/downloads/notas|/var/lib/icloud-imap-fetcher-c/contents/notas
 
 [logging]
 log_dir = /var/log/icloud-imap-fetcher-c
 retention_days = 7
 level = info
+log_http_port = 8080
 
 [schedule]
 interval_seconds = 300
@@ -100,6 +105,18 @@ Ou com script auxiliar:
 
 ```bash
 ./scripts/run-local.sh
+```
+
+Servidor HTTP de logs (rota `/logs`):
+
+```bash
+./bin/icloud-imap-fetcher-c --config ./config/icloud-imap-fetcher.example.conf --serve-logs
+```
+
+Exemplo de acompanhamento no terminal:
+
+```bash
+watch -n 2 'curl -s http://127.0.0.1:8080/logs | tail -n 30'
 ```
 
 ## Instalação

@@ -59,11 +59,92 @@ static int parse_bool(const char *value)
 
 static void set_string(char *destination, size_t destination_size, const char *source)
 {
+    size_t source_len;
+
     if (destination == NULL || destination_size == 0U || source == NULL) {
         return;
     }
 
-    snprintf(destination, destination_size, "%s", source);
+    source_len = strlen(source);
+    if (source_len >= destination_size) {
+        source_len = destination_size - 1U;
+    }
+
+    memcpy(destination, source, source_len);
+    destination[source_len] = '\0';
+}
+
+static int parse_mapping_entry(const char *value, MailboxMapping *mapping)
+{
+    char buffer[1024];
+    char *token;
+    int field_index = 0;
+    char *cursor;
+
+    if (value == NULL || mapping == NULL || strlen(value) >= sizeof(buffer)) {
+        return -1;
+    }
+
+    memset(mapping, 0, sizeof(*mapping));
+    snprintf(buffer, sizeof(buffer), "%s", value);
+
+    cursor = buffer;
+    token = buffer;
+    while (token != NULL) {
+        char *separator = strchr(token, '|');
+        if (separator != NULL) {
+            *separator = '\0';
+        }
+
+        trim_in_place(token);
+        if (field_index == 0) {
+            set_string(mapping->mailbox, sizeof(mapping->mailbox), token);
+        } else if (field_index == 1) {
+            set_string(mapping->search_filter, sizeof(mapping->search_filter), token);
+        } else if (field_index == 2) {
+            set_string(mapping->attachments_dir, sizeof(mapping->attachments_dir), token);
+        } else if (field_index == 3) {
+            set_string(mapping->contents_dir, sizeof(mapping->contents_dir), token);
+        }
+        field_index++;
+        if (separator == NULL) {
+            token = NULL;
+        } else {
+            cursor = separator + 1;
+            token = cursor;
+        }
+    }
+
+    if (mapping->mailbox[0] == '\0') {
+        return -1;
+    }
+
+    if (mapping->search_filter[0] == '\0') {
+        set_string(mapping->search_filter, sizeof(mapping->search_filter), "UNSEEN");
+    }
+
+    if (mapping->attachments_dir[0] == '\0') {
+        set_string(mapping->attachments_dir, sizeof(mapping->attachments_dir), "./downloads");
+    }
+
+    if (mapping->contents_dir[0] == '\0') {
+        set_string(mapping->contents_dir, sizeof(mapping->contents_dir), "./processed");
+    }
+
+    return 0;
+}
+
+static void ensure_default_mapping(AppConfig *config)
+{
+    if (config == NULL || config->mapping_count > 0) {
+        return;
+    }
+
+    set_string(config->mappings[0].mailbox, sizeof(config->mappings[0].mailbox), config->mailbox);
+    set_string(config->mappings[0].search_filter, sizeof(config->mappings[0].search_filter), config->search_filter);
+    set_string(config->mappings[0].attachments_dir, sizeof(config->mappings[0].attachments_dir), config->download_dir);
+    set_string(config->mappings[0].contents_dir, sizeof(config->mappings[0].contents_dir), config->processed_dir);
+    config->mapping_count = 1;
 }
 
 void app_config_set_defaults(AppConfig *config)
@@ -88,6 +169,7 @@ void app_config_set_defaults(AppConfig *config)
     config->dry_run = 0;
     config->retention_days = 7;
     config->interval_seconds = 300;
+    config->log_http_port = 0;
 }
 
 int app_config_load(const char *path, AppConfig *config)
@@ -154,18 +236,26 @@ int app_config_load(const char *path, AppConfig *config)
             set_string(config->download_dir, sizeof(config->download_dir), value);
         } else if (strcmp(key, "processed_dir") == 0) {
             set_string(config->processed_dir, sizeof(config->processed_dir), value);
+        } else if (strcmp(key, "mapping") == 0) {
+            if (config->mapping_count < MAX_MAPPINGS &&
+                parse_mapping_entry(value, &config->mappings[config->mapping_count]) == 0) {
+                config->mapping_count++;
+            }
         } else if (strcmp(key, "log_dir") == 0) {
             set_string(config->log_dir, sizeof(config->log_dir), value);
         } else if (strcmp(key, "level") == 0) {
             set_string(config->log_level, sizeof(config->log_level), value);
         } else if (strcmp(key, "retention_days") == 0) {
             config->retention_days = atoi(value);
+        } else if (strcmp(key, "log_http_port") == 0) {
+            config->log_http_port = atoi(value);
         } else if (strcmp(key, "interval_seconds") == 0) {
             config->interval_seconds = atoi(value);
         }
     }
 
     fclose(file);
+    ensure_default_mapping(config);
     return 0;
 }
 
@@ -187,8 +277,10 @@ void app_config_print(const AppConfig *config)
     printf("dry_run=%d\n", config->dry_run);
     printf("download_dir=%s\n", config->download_dir);
     printf("processed_dir=%s\n", config->processed_dir);
+    printf("mapping_count=%d\n", config->mapping_count);
     printf("log_dir=%s\n", config->log_dir);
     printf("log_level=%s\n", config->log_level);
     printf("retention_days=%d\n", config->retention_days);
+    printf("log_http_port=%d\n", config->log_http_port);
     printf("interval_seconds=%d\n", config->interval_seconds);
 }
