@@ -8,7 +8,7 @@ O `icloud-imap-fetcher-c` é um serviço orientado a execução periódica. O ob
 
 1. processo recebe `--config`;
 2. o módulo de configuração carrega defaults e sobrescreve com o arquivo `.conf`;
-3. o logger é inicializado e executa expurgo de logs antigos;
+3. o logger é inicializado, publica eventos em `stdout`/`stderr` e executa expurgo de logs antigos em arquivo quando habilitado;
 4. os diretórios operacionais são preparados;
 5. a camada IMAP é inicializada com `libcurl`;
 6. o serviço executa a rotina de busca/processamento;
@@ -22,7 +22,7 @@ Responsável por carregar defaults, ler o arquivo de configuração, interpretar
 
 ### `logger`
 
-Responsável por garantir existência do diretório de log, abrir o arquivo ativo, registrar mensagens com timestamp e remover arquivos `.log` antigos.
+Responsável por registrar mensagens com timestamp em `stdout`/`stderr` (coleta via `journalctl` em ambiente `systemd`) e, adicionalmente, manter arquivo diário com expurgo de `.log` antigos.
 
 ### `attachment_saver`
 

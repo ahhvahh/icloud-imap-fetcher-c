@@ -33,7 +33,7 @@ config/icloud-imap-fetcher.example.conf
 - `dry_run`: quando `true`, o serviço simula a operação sem persistir artefatos.
 - `download_dir`: pasta de saída para anexos baixados.
 - `processed_dir`: pasta auxiliar para rastreamento.
-- `log_dir`: diretório onde os arquivos `.log` serão gravados.
+- `log_dir`: diretório onde os arquivos `.log` diários serão gravados (além dos eventos já emitidos em `stdout`/`stderr`).
 - `retention_days`: define a retenção dos logs por idade de arquivo.
 - `level`: nível de log textual.
 - `interval_seconds`: intervalo alvo entre execuções.

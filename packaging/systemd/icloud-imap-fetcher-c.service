@@ -6,6 +6,9 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=__PREFIX__/bin/icloud-imap-fetcher-c --config __SYSCONFDIR__/icloud-imap-fetcher-c/config.conf
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=icloud-imap-fetcher-c
 Nice=5
 PrivateTmp=true
 NoNewPrivileges=true

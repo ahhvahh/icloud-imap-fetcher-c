@@ -98,10 +98,12 @@ static void prune_old_logs(void)
 static void logger_write(const char *level, const char *message)
 {
     char timestamp[32];
+    FILE *stream;
+    int is_error;
     time_t now;
     struct tm tm_info;
 
-    if (g_log_file == NULL || level == NULL || message == NULL) {
+    if (level == NULL || message == NULL) {
         return;
     }
 
@@ -124,8 +126,16 @@ static void logger_write(const char *level, const char *message)
         return;
     }
 
-    fprintf(g_log_file, "%s [%s] %s\n", timestamp, level, message);
-    fflush(g_log_file);
+    is_error = (strcmp(level, "ERROR") == 0);
+    stream = is_error ? stderr : stdout;
+
+    fprintf(stream, "%s [%s] %s\n", timestamp, level, message);
+    fflush(stream);
+
+    if (g_log_file != NULL) {
+        fprintf(g_log_file, "%s [%s] %s\n", timestamp, level, message);
+        fflush(g_log_file);
+    }
 }
 
 int logger_init(const char *log_dir, int retention_days)
@@ -142,6 +152,9 @@ int logger_init(const char *log_dir, int retention_days)
     if (retention_days < 1) {
         retention_days = 1;
     }
+
+    (void)setvbuf(stdout, NULL, _IOLBF, 0);
+    (void)setvbuf(stderr, NULL, _IOLBF, 0);
 
     now = time(NULL);
 #if defined(_POSIX_THREAD_SAFE_FUNCTIONS)

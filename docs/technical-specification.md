@@ -26,8 +26,8 @@ icloud-imap-fetcher-c
 
 1. carregar configuração de arquivo;
 2. aplicar defaults para campos não informados;
-3. inicializar log em diretório configurável;
-4. realizar expurgo de logs antigos;
+3. inicializar logging em `stdout`/`stderr` para coleta por `journalctl` em `systemd`;
+4. manter log diário em diretório configurável e realizar expurgo de logs antigos;
 5. preparar diretórios de dados;
 6. inicializar `libcurl` com credenciais e URL IMAP;
 7. encerrar com código diferente de zero em falha crítica.

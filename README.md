@@ -160,9 +160,17 @@ sudo systemctl status icloud-imap-fetcher-c.service
 
 ## Logging
 
-- Diretório definido por `log_dir`.
+- Logs operacionais emitidos em `stdout`/`stderr` (coletáveis via `journalctl` quando executando com `systemd`).
+- Persistência opcional em arquivo no diretório `log_dir`.
 - Um arquivo por dia no formato `YYYY-MM-DD.log`.
 - Limpeza de arquivos `.log` mais antigos que `retention_days`.
+
+Exemplos com `journalctl`:
+
+```bash
+sudo journalctl -u icloud-imap-fetcher-c.service -n 100
+sudo journalctl -u icloud-imap-fetcher-c.service -f
+```
 
 ## Estrutura do projeto
 
