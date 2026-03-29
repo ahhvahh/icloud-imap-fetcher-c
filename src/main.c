@@ -84,7 +84,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (logger_init(config.log_dir, config.retention_days) != 0) {
+    if (logger_init(config.log_dir, config.retention_days, config.log_level) != 0) {
         fprintf(stderr, "failed to init logger\n");
         return 1;
     }
