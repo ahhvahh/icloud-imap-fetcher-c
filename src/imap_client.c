@@ -39,10 +39,20 @@ int imap_client_fetch(const AppConfig *config)
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
     curl_easy_setopt(curl, CURLOPT_NOBODY, 1L);
 
-    snprintf(message, sizeof(message), "initializing IMAP session mailbox=%.120s filter=%.120s",
-             config->mailbox,
-             config->search_filter);
-    logger_info(message);
+    if (config->mapping_count > 0) {
+        int index;
+        for (index = 0; index < config->mapping_count; index++) {
+            snprintf(message, sizeof(message), "initializing IMAP session mailbox=%.120s filter=%.120s",
+                     config->mappings[index].mailbox,
+                     config->mappings[index].search_filter);
+            logger_info(message);
+        }
+    } else {
+        snprintf(message, sizeof(message), "initializing IMAP session mailbox=%.120s filter=%.120s",
+                 config->mailbox,
+                 config->search_filter);
+        logger_info(message);
+    }
 
     result = curl_easy_perform(curl);
     if (result != CURLE_OK) {

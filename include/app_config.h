@@ -3,6 +3,14 @@
 
 #define PATH_MAX_LEN 512
 #define STR_MAX_LEN 256
+#define MAX_MAPPINGS 16
+
+typedef struct MailboxMapping {
+    char mailbox[STR_MAX_LEN];
+    char search_filter[STR_MAX_LEN];
+    char attachments_dir[PATH_MAX_LEN];
+    char contents_dir[PATH_MAX_LEN];
+} MailboxMapping;
 
 typedef struct AppConfig {
     char username[STR_MAX_LEN];
@@ -20,10 +28,13 @@ typedef struct AppConfig {
 
     char download_dir[PATH_MAX_LEN];
     char processed_dir[PATH_MAX_LEN];
+    MailboxMapping mappings[MAX_MAPPINGS];
+    int mapping_count;
 
     char log_dir[PATH_MAX_LEN];
     char log_level[STR_MAX_LEN];
     int retention_days;
+    int log_http_port;
 
     int interval_seconds;
 } AppConfig;
