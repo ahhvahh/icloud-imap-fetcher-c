@@ -1,2 +1,177 @@
 # icloud-imap-fetcher-c
-Serviço em C com libcurl para acessar uma conta iCloud Mail via IMAP e baixar e-mails selecionados de uma pasta específica.
+
+Serviço em **C11 + libcurl** para conectar ao iCloud Mail via **IMAP sobre TLS**, aplicar filtros básicos e executar rotina de coleta de mensagens com base em configuração externa.
+
+> **Status atual:** base funcional para configuração, conexão IMAP inicial, preparação de diretórios, logging com retenção e execução via `systemd service + timer`.
+
+## Objetivo
+
+Automatizar um fluxo operacional de coleta de e-mails em Linux, sem interface gráfica, com execução periódica e auditável.
+
+## Escopo atual
+
+- Carregamento de configuração por arquivo `.conf`.
+- Conexão IMAP inicial usando `libcurl`.
+- Preparação de diretórios de download/processados.
+- Logging em arquivo por dia com retenção em dias.
+- Instalação local com script (`scripts/install.sh`).
+- Unidades `systemd` de `service` e `timer`.
+
+## Limitações conhecidas
+
+- A rotina IMAP ainda está em nível inicial (sessão/conexão); o fluxo completo de parsing MIME e persistência de anexos ainda precisa ser evoluído.
+- Filtros avançados por remetente/assunto estão previstos em configuração, mas ainda dependem de implementação completa no cliente IMAP.
+
+## Requisitos
+
+- Linux
+- Compilador C com suporte a C11 (ex.: `gcc` ou `clang`)
+- `make`
+- `libcurl` (headers + biblioteca)
+- `systemd` (para modo serviço/timer)
+
+Exemplo de dependências (Debian/Ubuntu):
+
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential libcurl4-openssl-dev
+```
+
+## Build
+
+```bash
+make clean
+make
+```
+
+Binário gerado:
+
+- `bin/icloud-imap-fetcher-c`
+
+## Configuração
+
+Use `config/icloud-imap-fetcher.example.conf` como base.
+
+```ini
+[icloud]
+username = your-email@icloud.com
+app_password = CHANGE_ME_APP_PASSWORD
+imap_url = imaps://imap.mail.me.com
+mailbox = INBOX/Processar
+search_filter = UNSEEN
+mark_as_read = false
+
+[message_filter]
+from_contains = extrato@banco.com.br
+subject_contains = Extrato Consolidado
+attachment_name_prefix = extrato_
+max_messages_per_run = 10
+dry_run = false
+
+[storage]
+download_dir = /var/lib/icloud-imap-fetcher-c/downloads
+processed_dir = /var/lib/icloud-imap-fetcher-c/processed
+
+[logging]
+log_dir = /var/log/icloud-imap-fetcher-c
+retention_days = 7
+level = info
+
+[schedule]
+interval_seconds = 300
+```
+
+### Segurança da configuração
+
+- Use **app-specific password** da Apple (não use a senha principal da conta).
+- Proteja o arquivo com permissão restrita:
+
+```bash
+chmod 600 /etc/icloud-imap-fetcher-c/config.conf
+```
+
+## Execução local
+
+```bash
+./bin/icloud-imap-fetcher-c --config ./config/icloud-imap-fetcher.example.conf
+```
+
+Ou com script auxiliar:
+
+```bash
+./scripts/run-local.sh
+```
+
+## Instalação
+
+Script de instalação:
+
+```bash
+sudo ./scripts/install.sh
+```
+
+Parâmetros suportados:
+
+- `--prefix <dir>`
+- `--sysconfdir <dir>`
+- `--localstatedir <dir>`
+- `--unitdir <dir>`
+- `--config-source <file>`
+
+Exemplo:
+
+```bash
+sudo ./scripts/install.sh --prefix /usr/local --sysconfdir /etc --localstatedir /var
+```
+
+## systemd
+
+Após instalar:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now icloud-imap-fetcher-c.timer
+sudo systemctl list-timers | grep icloud-imap-fetcher-c
+```
+
+Execução manual do serviço:
+
+```bash
+sudo systemctl start icloud-imap-fetcher-c.service
+sudo systemctl status icloud-imap-fetcher-c.service
+```
+
+## Logging
+
+- Diretório definido por `log_dir`.
+- Um arquivo por dia no formato `YYYY-MM-DD.log`.
+- Limpeza de arquivos `.log` mais antigos que `retention_days`.
+
+## Estrutura do projeto
+
+```text
+.
+├── config/
+├── docs/
+├── include/
+├── packaging/systemd/
+├── scripts/
+├── src/
+├── Makefile
+└── README.md
+```
+
+## Roadmap sugerido
+
+1. Finalizar busca IMAP por mailbox/filtros.
+2. Implementar parsing MIME e download real de anexos.
+3. Implementar marcação de mensagens processadas (ex.: `SEEN` ou UID tracking).
+4. Ampliar testes e validar fluxo ponta a ponta com conta iCloud de homologação.
+
+## Documentação complementar
+
+- `docs/architecture.md`
+- `docs/configuration.md`
+- `docs/deployment.md`
+- `docs/technical-specification.md`
+- `SECURITY.md`
