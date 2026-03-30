@@ -52,7 +52,7 @@ int main(int argc, char **argv)
     }
 
     if (app_config_load(config_path, &config) != 0) {
-        fprintf(stderr, "failed to load config: %s\n", config_path);
+        fprintf(stderr, "failed to load config or systemd credentials: %s\n", config_path);
         return 1;
     }
 
@@ -60,32 +60,38 @@ int main(int argc, char **argv)
         for (index = 0; index < config.mapping_count; index++) {
             if (attachment_saver_prepare_directory(config.mappings[index].attachments_dir) != 0) {
                 fprintf(stderr, "failed to prepare mapping[%d].attachments_dir\n", index);
+                app_config_clear_sensitive(&config);
                 return 1;
             }
             if (attachment_saver_prepare_directory(config.mappings[index].contents_dir) != 0) {
                 fprintf(stderr, "failed to prepare mapping[%d].contents_dir\n", index);
+                app_config_clear_sensitive(&config);
                 return 1;
             }
         }
     } else {
         if (attachment_saver_prepare_directory(config.download_dir) != 0) {
             fprintf(stderr, "failed to prepare download_dir\n");
+            app_config_clear_sensitive(&config);
             return 1;
         }
 
         if (attachment_saver_prepare_directory(config.processed_dir) != 0) {
             fprintf(stderr, "failed to prepare processed_dir\n");
+            app_config_clear_sensitive(&config);
             return 1;
         }
     }
 
     if (attachment_saver_prepare_directory(config.log_dir) != 0) {
         fprintf(stderr, "failed to prepare log_dir\n");
+        app_config_clear_sensitive(&config);
         return 1;
     }
 
     if (logger_init(config.log_dir, config.retention_days, config.log_level) != 0) {
         fprintf(stderr, "failed to init logger\n");
+        app_config_clear_sensitive(&config);
         return 1;
     }
 
@@ -97,6 +103,7 @@ int main(int argc, char **argv)
         if (config.log_http_port <= 0) {
             fprintf(stderr, "log_http_port must be configured (>0) to use --serve-logs\n");
             logger_close();
+            app_config_clear_sensitive(&config);
             return 1;
         }
 
@@ -104,16 +111,19 @@ int main(int argc, char **argv)
         logger_info(message);
         (void)log_http_server_run(config.log_dir, config.log_http_port);
         logger_close();
+        app_config_clear_sensitive(&config);
         return 0;
     }
 
     if (imap_client_fetch(&config) != 0) {
         logger_error("fetch routine failed");
         logger_close();
+        app_config_clear_sensitive(&config);
         return 1;
     }
 
     logger_info("application finished successfully");
     logger_close();
+    app_config_clear_sensitive(&config);
     return 0;
 }

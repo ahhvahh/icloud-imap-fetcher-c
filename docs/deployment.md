@@ -42,3 +42,12 @@ su -c './scripts/install.sh \
 ## systemd
 
 O projeto inclui um service e um timer prontos para instalação.
+
+## Credenciais em produção
+
+Use o script root `scripts/manage-credentials.sh` para criar/atualizar segredos em:
+
+- `/etc/credstore/icloud-imap-fetcher-c/mail.icloud.user`
+- `/etc/credstore/icloud-imap-fetcher-c/mail.icloud.pswrd`
+
+O serviço carrega os segredos com `LoadCredential=` e a aplicação lê por `CREDENTIALS_DIRECTORY`.

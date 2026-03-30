@@ -56,8 +56,8 @@ Use `config/icloud-imap-fetcher.example.conf` como base.
 
 ```ini
 [icloud]
-username = your-email@icloud.com
-app_password = CHANGE_ME_APP_PASSWORD
+credential_username_name = mail.icloud.user
+credential_password_name = mail.icloud.pswrd
 imap_url = imaps://imap.mail.me.com
 mailbox = INBOX/Processar
 search_filter = UNSEEN
@@ -86,10 +86,18 @@ log_http_port = 8080
 interval_seconds = 300
 ```
 
-### Segurança da configuração
+### Segurança da configuração e credenciais
 
 - Use **app-specific password** da Apple (não use a senha principal da conta).
-- Proteja o arquivo com permissão restrita:
+- Não armazene segredos no `.conf`.
+- Cadastre segredos no credstore com script administrativo:
+
+```bash
+sudo ./scripts/manage-credentials.sh --set mail.icloud.user
+sudo ./scripts/manage-credentials.sh --set mail.icloud.pswrd
+```
+
+- Proteja o arquivo de configuração com permissão restrita:
 
 ```bash
 chmod 600 /etc/icloud-imap-fetcher-c/config.conf
@@ -171,6 +179,11 @@ Execução manual do serviço:
 sudo systemctl start icloud-imap-fetcher-c.service
 sudo systemctl status icloud-imap-fetcher-c.service
 ```
+
+O unit file usa `LoadCredential=` para carregar:
+
+- `mail.icloud.user`
+- `mail.icloud.pswrd`
 
 ## Logging
 

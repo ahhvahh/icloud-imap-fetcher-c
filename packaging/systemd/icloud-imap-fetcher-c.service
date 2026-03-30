@@ -5,13 +5,22 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+User=icloud-imap-fetcher-c
+Group=icloud-imap-fetcher-c
 ExecStart=__PREFIX__/bin/icloud-imap-fetcher-c --config __SYSCONFDIR__/icloud-imap-fetcher-c/config.conf
+LoadCredential=mail.icloud.user:/etc/credstore/icloud-imap-fetcher-c/mail.icloud.user
+LoadCredential=mail.icloud.pswrd:/etc/credstore/icloud-imap-fetcher-c/mail.icloud.pswrd
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=icloud-imap-fetcher-c
 Nice=5
 PrivateTmp=true
 NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=yes
+ProtectProc=invisible
+PrivateDevices=yes
+ReadWritePaths=__LOCALSTATEDIR__/lib/icloud-imap-fetcher-c __LOCALSTATEDIR__/log/icloud-imap-fetcher-c
 
 [Install]
 WantedBy=multi-user.target

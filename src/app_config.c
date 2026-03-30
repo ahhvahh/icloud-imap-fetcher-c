@@ -74,6 +74,95 @@ static void set_string(char *destination, size_t destination_size, const char *s
     destination[source_len] = '\0';
 }
 
+static int is_valid_credential_name(const char *name)
+{
+    size_t index;
+    unsigned char character;
+
+    if (name == NULL || name[0] == '\0') {
+        return 0;
+    }
+
+    for (index = 0; name[index] != '\0'; index++) {
+        character = (unsigned char)name[index];
+        if (!(isalnum(character) || character == '.' || character == '_' || character == '-')) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int read_credential(const char *credentials_directory,
+                           const char *credential_name,
+                           char *output,
+                           size_t output_size)
+{
+    char path[PATH_MAX_LEN];
+    FILE *file;
+    size_t read_bytes;
+
+    if (credentials_directory == NULL || credential_name == NULL || output == NULL || output_size < 2U) {
+        return -1;
+    }
+
+    if (!is_valid_credential_name(credential_name)) {
+        return -1;
+    }
+
+    if (snprintf(path, sizeof(path), "%s/%s", credentials_directory, credential_name) < 0) {
+        return -1;
+    }
+
+    file = fopen(path, "rb");
+    if (file == NULL) {
+        return -1;
+    }
+
+    read_bytes = fread(output, 1U, output_size - 1U, file);
+    output[read_bytes] = '\0';
+    fclose(file);
+
+    while (read_bytes > 0U &&
+           (output[read_bytes - 1U] == '\n' || output[read_bytes - 1U] == '\r')) {
+        output[read_bytes - 1U] = '\0';
+        read_bytes--;
+    }
+
+    return (output[0] == '\0') ? -1 : 0;
+}
+
+static int load_systemd_credentials(AppConfig *config)
+{
+    const char *credentials_directory;
+
+    if (config == NULL) {
+        return -1;
+    }
+
+    credentials_directory = getenv("CREDENTIALS_DIRECTORY");
+    if (credentials_directory == NULL || credentials_directory[0] == '\0') {
+        return -1;
+    }
+
+    if (read_credential(credentials_directory,
+                        config->credential_username_name,
+                        config->username,
+                        sizeof(config->username)) != 0) {
+        return -1;
+    }
+
+    if (read_credential(credentials_directory,
+                        config->credential_password_name,
+                        config->app_password,
+                        sizeof(config->app_password)) != 0) {
+        memset(config->username, 0, sizeof(config->username));
+        return -1;
+    }
+
+    return 0;
+}
+
 static int parse_mapping_entry(const char *value, MailboxMapping *mapping)
 {
     char buffer[1024];
@@ -155,6 +244,8 @@ void app_config_set_defaults(AppConfig *config)
 
     memset(config, 0, sizeof(*config));
 
+    set_string(config->credential_username_name, sizeof(config->credential_username_name), "mail.icloud.user");
+    set_string(config->credential_password_name, sizeof(config->credential_password_name), "mail.icloud.pswrd");
     set_string(config->imap_url, sizeof(config->imap_url), "imaps://imap.mail.me.com");
     set_string(config->mailbox, sizeof(config->mailbox), "INBOX/Processar");
     set_string(config->search_filter, sizeof(config->search_filter), "UNSEEN");
@@ -210,10 +301,10 @@ int app_config_load(const char *path, AppConfig *config)
         trim_in_place(key);
         trim_in_place(value);
 
-        if (strcmp(key, "username") == 0) {
-            set_string(config->username, sizeof(config->username), value);
-        } else if (strcmp(key, "app_password") == 0) {
-            set_string(config->app_password, sizeof(config->app_password), value);
+        if (strcmp(key, "credential_username_name") == 0) {
+            set_string(config->credential_username_name, sizeof(config->credential_username_name), value);
+        } else if (strcmp(key, "credential_password_name") == 0) {
+            set_string(config->credential_password_name, sizeof(config->credential_password_name), value);
         } else if (strcmp(key, "imap_url") == 0) {
             set_string(config->imap_url, sizeof(config->imap_url), value);
         } else if (strcmp(key, "mailbox") == 0) {
@@ -256,6 +347,11 @@ int app_config_load(const char *path, AppConfig *config)
 
     fclose(file);
     ensure_default_mapping(config);
+
+    if (load_systemd_credentials(config) != 0) {
+        return -1;
+    }
+
     return 0;
 }
 
@@ -265,7 +361,8 @@ void app_config_print(const AppConfig *config)
         return;
     }
 
-    printf("username=%s\n", config->username);
+    printf("credential_username_name=%s\n", config->credential_username_name);
+    printf("credential_password_name=%s\n", config->credential_password_name);
     printf("imap_url=%s\n", config->imap_url);
     printf("mailbox=%s\n", config->mailbox);
     printf("search_filter=%s\n", config->search_filter);
@@ -283,4 +380,14 @@ void app_config_print(const AppConfig *config)
     printf("retention_days=%d\n", config->retention_days);
     printf("log_http_port=%d\n", config->log_http_port);
     printf("interval_seconds=%d\n", config->interval_seconds);
+}
+
+void app_config_clear_sensitive(AppConfig *config)
+{
+    if (config == NULL) {
+        return;
+    }
+
+    memset(config->username, 0, sizeof(config->username));
+    memset(config->app_password, 0, sizeof(config->app_password));
 }
