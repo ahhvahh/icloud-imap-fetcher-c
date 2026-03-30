@@ -4,8 +4,8 @@ set -euo pipefail
 PROJECT_ROOT=${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
 OUTPUT_PATH=${1:-"$PROJECT_ROOT/.runtime/generated.config.conf"}
 
-IMAP_USERNAME=${IMAP_USERNAME:-}
-IMAP_APP_PASSWORD=${IMAP_APP_PASSWORD:-}
+IMAP_CREDENTIAL_USERNAME_NAME=${IMAP_CREDENTIAL_USERNAME_NAME:-mail.icloud.user}
+IMAP_CREDENTIAL_PASSWORD_NAME=${IMAP_CREDENTIAL_PASSWORD_NAME:-mail.icloud.pswrd}
 IMAP_URL=${IMAP_URL:-imaps://imap.mail.me.com}
 IMAP_MAILBOX=${IMAP_MAILBOX:-INBOX}
 IMAP_SEARCH_FILTER=${IMAP_SEARCH_FILTER:-UNSEEN}
@@ -22,16 +22,6 @@ LOG_RETENTION_DAYS=${LOG_RETENTION_DAYS:-7}
 LOG_LEVEL=${LOG_LEVEL:-info}
 INTERVAL_SECONDS=${INTERVAL_SECONDS:-300}
 
-if [[ -z "$IMAP_USERNAME" ]]; then
-  echo "IMAP_USERNAME is required" >&2
-  exit 1
-fi
-
-if [[ -z "$IMAP_APP_PASSWORD" ]]; then
-  echo "IMAP_APP_PASSWORD is required" >&2
-  exit 1
-fi
-
 mkdir -p "$(dirname "$OUTPUT_PATH")"
 mkdir -p "$MAIL_DEST_DIR"
 mkdir -p "$ATTACHMENT_DEST_DIR"
@@ -39,8 +29,8 @@ mkdir -p "$LOG_DIR"
 
 cat > "$OUTPUT_PATH" <<EOF
 [icloud]
-username = $IMAP_USERNAME
-app_password = $IMAP_APP_PASSWORD
+credential_username_name = $IMAP_CREDENTIAL_USERNAME_NAME
+credential_password_name = $IMAP_CREDENTIAL_PASSWORD_NAME
 imap_url = $IMAP_URL
 mailbox = $IMAP_MAILBOX
 search_filter = $IMAP_SEARCH_FILTER

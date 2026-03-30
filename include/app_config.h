@@ -15,6 +15,8 @@ typedef struct MailboxMapping {
 typedef struct AppConfig {
     char username[STR_MAX_LEN];
     char app_password[STR_MAX_LEN];
+    char credential_username_name[STR_MAX_LEN];
+    char credential_password_name[STR_MAX_LEN];
     char imap_url[STR_MAX_LEN];
     char mailbox[STR_MAX_LEN];
     char search_filter[STR_MAX_LEN];
@@ -42,5 +44,6 @@ typedef struct AppConfig {
 void app_config_set_defaults(AppConfig *config);
 int app_config_load(const char *path, AppConfig *config);
 void app_config_print(const AppConfig *config);
+void app_config_clear_sensitive(AppConfig *config);
 
 #endif

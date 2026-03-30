@@ -66,6 +66,16 @@ PROCESSED_DIR="$DATA_DIR/processed"
 LOG_DIR="$LOCALSTATEDIR/log/icloud-imap-fetcher-c"
 SERVICE_TARGET="$UNITDIR/icloud-imap-fetcher-c.service"
 TIMER_TARGET="$UNITDIR/icloud-imap-fetcher-c.timer"
+SERVICE_USER="icloud-imap-fetcher-c"
+
+if ! getent group "$SERVICE_USER" >/dev/null 2>&1; then
+  groupadd --system "$SERVICE_USER"
+fi
+
+if ! id -u "$SERVICE_USER" >/dev/null 2>&1; then
+  useradd --system --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin \
+    --gid "$SERVICE_USER" "$SERVICE_USER"
+fi
 
 cd "$ROOT_DIR"
 make clean
@@ -80,13 +90,15 @@ install -d "$PROCESSED_DIR"
 install -d "$LOG_DIR"
 install -d "$UNITDIR"
 
+chown "$SERVICE_USER:$SERVICE_USER" "$DATA_DIR" "$DOWNLOAD_DIR" "$PROCESSED_DIR" "$LOG_DIR"
+
 install -m 0755 "$ROOT_DIR/bin/icloud-imap-fetcher-c" "$BIN_DIR/icloud-imap-fetcher-c"
 install -m 0644 "$ROOT_DIR/README.md" "$DOC_DIR/README.md"
 install -m 0644 "$ROOT_DIR/docs/architecture.md" "$DOC_DIR/architecture.md"
 install -m 0644 "$ROOT_DIR/docs/configuration.md" "$DOC_DIR/configuration.md"
 install -m 0644 "$ROOT_DIR/docs/deployment.md" "$DOC_DIR/deployment.md"
 install -m 0644 "$ROOT_DIR/docs/technical-specification.md" "$DOC_DIR/technical-specification.md"
-sed -e "s#__PREFIX__#$PREFIX#g" -e "s#__SYSCONFDIR__#$SYSCONFDIR#g" \
+sed -e "s#__PREFIX__#$PREFIX#g" -e "s#__SYSCONFDIR__#$SYSCONFDIR#g" -e "s#__LOCALSTATEDIR__#$LOCALSTATEDIR#g" \
   "$ROOT_DIR/packaging/systemd/icloud-imap-fetcher-c.service" > "$SERVICE_TARGET"
 install -m 0644 "$ROOT_DIR/packaging/systemd/icloud-imap-fetcher-c.timer" "$TIMER_TARGET"
 chmod 0644 "$SERVICE_TARGET" "$TIMER_TARGET"

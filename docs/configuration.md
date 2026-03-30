@@ -20,8 +20,8 @@ config/icloud-imap-fetcher.example.conf
 
 ## Parâmetros suportados
 
-- `username`: conta iCloud Mail usada para autenticação.
-- `app_password`: senha específica de app.
+- `credential_username_name`: nome da credencial `systemd` para usuário IMAP (padrão: `mail.icloud.user`).
+- `credential_password_name`: nome da credencial `systemd` para senha de app IMAP (padrão: `mail.icloud.pswrd`).
 - `imap_url`: URL IMAP. Para iCloud, o padrão é `imaps://imap.mail.me.com`.
 - `mailbox`: nome da pasta IMAP alvo.
 - `search_filter`: filtro IMAP base. Exemplo comum: `UNSEEN`.
@@ -37,3 +37,9 @@ config/icloud-imap-fetcher.example.conf
 - `retention_days`: define a retenção dos logs por idade de arquivo.
 - `level`: nível de log textual.
 - `interval_seconds`: intervalo alvo entre execuções.
+
+## Segredos com systemd credentials
+
+As credenciais IMAP **não devem** ser armazenadas no arquivo `.conf`.
+
+O serviço usa `LoadCredential=` e a aplicação lê segredos via `CREDENTIALS_DIRECTORY`.
